@@ -4,8 +4,8 @@ import cors from "cors";
 import morgan from "morgan";
 import { dbConnection } from "./mongo.js";
 import { createAdmin } from "../src/auth/auth.controller.js";
-
-
+import userRoutes from "../src/user/user.routes.js";
+import authRoutes from "../src/auth/auth.routes.js";
 
 const middlewares = (app) => {
     app.use(express.urlencoded({ extended: false }));
@@ -14,6 +14,11 @@ const middlewares = (app) => {
     app.use(helmet());
     app.use(morgan("dev"))
 };
+
+const routes = (app) => {
+    app.use("/api/v1/auth", authRoutes);
+    app.use("/api/v1/user", userRoutes);
+}
 
 
 
@@ -33,6 +38,7 @@ export const initServer = () => {
     const app = express()
     try{
         middlewares(app);
+        routes(app);
         conectarDB();
         app.listen(process.env.PORT);
         console.log(`Server running on port ${process.env.PORT}`)

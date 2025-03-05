@@ -3,6 +3,7 @@ import User from "../user/user.model.js"
 import { generateJWT } from "../helpers/generate-jwt.js"
 
 
+
 export const register = async (req, res) => {
     try{
         const data = req.body
@@ -25,44 +26,61 @@ export const register = async (req, res) => {
 }
 
 export const login = async (req, res) => {
-    const { email, password } = req.body
-    try{
+    const { email, username, password } = req.body;
+    try {
+        console.log("Iniciando proceso de login...");  
+        
+        // Buscar usuario por email o username
         const user = await User.findOne({
-            $or:[{email: email}]
-        })
+            $or: [{ email: email }, { username: username }]
+        });
 
-        if(!user){
+        if (!user) {
+            console.log("Usuario no encontrado"); 
             return res.status(400).json({
-                message: "Credenciales inválidas o incorrectas",
-                error: "No existe el usuario o el email ingresado"
-            })
+                message: "Credenciales inválidas",
+                error: "No existe el usuario o correo ingresado"
+            });
         }
 
-        const validPassword = await verify(user.password, password)
-
-        if(!validPassword){
+        const validPassword = await verify(user.password, password);
+        if (!validPassword) {
+            console.log("Contraseña incorrecta"); 
             return res.status(400).json({
-                message: "Credenciales invalidas",
-                error: "La contraseña ingresada es incorrecta"
-            })
+                message: "Credenciales inválidas",
+                error: "Contraseña incorrecta"
+            });
         }
 
-        const token = await generateJWT(user.id)
+     
+        const token = await generateJWT(user.id);
+        if (!token) {
+            console.log("No se pudo generar el token"); 
+            return res.status(500).json({
+                message: "Error al generar el token",
+                error: "No se pudo generar el token JWT"
+            });
+        }
+
 
         return res.status(200).json({
-            message: "Inicio de sesion exitosa",
-            userDetails:{
-                token: token
+            message: "Inicio de sesión exitoso",
+            userDetails: {
+                token: token,
+                name: user.name,
+                role: user.role
             }
-        })
-        
-    }catch(err) {
+        });
+
+    } catch (err) {
+        console.error("Error en el login:", err); 
         return res.status(500).json({
-            message: "Error al iniciar sesion",
-            error: err.message
-        })
+            message: "Fallo en el inicio de sesión, error en el servidor",
+            error: err 
+        });
     }
-}
+};
+
 
 
 export const createAdmin = async () => {

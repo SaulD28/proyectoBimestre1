@@ -1,5 +1,5 @@
 import {body} from "express-validator";
-import { emailExists, usernameExists } from ""
+import { emailExists } from "../helpers/db-validator.js";
 import { validarCampos } from "./validate-fields.js"
 import { handleErrors } from "./handle-errors.js";
 
