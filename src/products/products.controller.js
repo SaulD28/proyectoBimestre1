@@ -1,144 +1,207 @@
 import Product from "../products/products.model.js";
+import Category from "../category/category.model.js";
 
-export const addProduct = async (req, res) => {
+export const createProduct = async (req, res) => {
     try {
-        const { name, description, price, stock } = req.body;
-        const newProduct = new Product({ name, description, price, stock });
+        const { name, description, price, stock, categoryName } = req.body;
+        console.log(categoryName);
+
+        let category;
+        if (categoryName) {
+            category = await Category.findOne({ name: categoryName });
+            if (!category) {
+                return res.status(404).json({
+                    success: false,
+                    msg: "Categoría no encontrada"
+                });
+            }
+        } else {
+            category = await Category.findOne({ name: "Sin Categoría" });
+            if (!category) {
+                category = new Category({ name: "Sin Categoría" });
+                await category.save();
+            }
+        }
+
+        const newProduct = new Product({ name, description, price, stock, category: category._id });
         await newProduct.save();
+        const populatedProduct = await Product.findById(newProduct._id).populate('category', 'name');
         res.status(201).json({
             success: true,
-            message: "Producto añadido con éxito",
-            product: newProduct
+            msg: "Producto creado",
+            product: populatedProduct
         });
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({
             success: false,
-            message: "Error al añadir el producto",
-            error: error.message
+            msg: "Error al crear producto",
+            error: err.message
         });
     }
 };
 
-export const fetchAllProducts = async (req, res) => {
+export const getProducts = async (req, res) => {
     try {
-        const products = await Product.find();
+        const products = await Product.find({ }).populate("category", "name");
         res.status(200).json({
             success: true,
             products
         });
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({
             success: false,
-            message: 'No se pudieron obtener los productos',
-            error: error.message
+            msg: 'Error al obtener productos',
+            error: err.message
         });
     }
 };
 
-
-export const fetchProductById = async (req, res) => {
+export const getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        const product = await Product.findById(id);
+        const product = await Product.findById(id).populate('category', 'name');
         if (!product) {
             return res.status(404).json({
                 success: false,
-                message: 'Producto no encontrado'
+                msg: 'Producto no encontrado'
             });
         }
         res.status(200).json({
             success: true,
             product
         });
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({
             success: false,
-            message: 'Error al obtener el producto',
-            error: error.message
+            msg: 'Error al obtener producto',
+            error: err.message
         });
     }
 };
 
-
-export const modifyProduct = async (req, res) => {
+export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const updatedProduct = await Product.findByIdAndUpdate(id, req.body, { new: true });
         if (!updatedProduct) {
             return res.status(404).json({
                 success: false,
-                message: 'Producto no encontrado'
+                msg: 'Producto no encontrado'
             });
         }
         res.status(200).json({
             success: true,
-            message: 'Producto actualizado correctamente',
+            msg: 'Producto actualizado',
             product: updatedProduct
         });
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({
             success: false,
-            message: 'Error al actualizar el producto',
-            error: error.message
+            msg: 'Error al actualizar producto',
+            error: err.message
         });
     }
 };
 
-
-export const removeProduct = async (req, res) => {
+export const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const deletedProduct = await Product.findByIdAndDelete(id);
         if (!deletedProduct) {
             return res.status(404).json({
                 success: false,
-                message: 'Producto no encontrado'
+                msg: 'Producto no encontrado'
             });
         }
         res.status(200).json({
             success: true,
-            message: 'Producto eliminado con éxito',
+            msg: 'Producto eliminado',
             product: deletedProduct
         });
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({
             success: false,
-            message: 'Error al eliminar el producto',
-            error: error.message
+            msg: 'Error al eliminar producto',
+            error: err.message
         });
     }
 };
 
-
-export const getOutOfStockProducts = async (req, res) => {
+export const SoldOut = async (req, res) => {
     try {
-        const outOfStock = await Product.find({ stock: 0 });
+        const products = await Product.find({ stock: 0 }).populate("category", "name");
         res.status(200).json({
             success: true,
-            products: outOfStock
+            products
         });
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({
             success: false,
-            message: 'Error al obtener productos agotados',
-            error: error.message
+            msg: 'Error al obtener productos agotados',
+            error: err.message
         });
     }
 };
 
-
-export const getSoldProducts = async (req, res) => {
+export const sellingProducts = async (req, res) => {
     try {
-        const soldProducts = await Product.find({ sold: { $gt: 0 } });
+        const products = await Product.find({ sold: { $gt: 0 } }).populate("category", "name");
         res.status(200).json({
             success: true,
-            products: soldProducts
+            products
         });
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({
             success: false,
-            message: 'Error al obtener productos vendidos',
-            error: error.message
+            msg: "Error al obtener productos vendidos",
+            error: err.message
+        });
+    }
+};
+
+export const listProductsBy = async (req, res) => {
+    try {
+        const { FiltrarPor } = req.query;
+
+        let products;
+
+        if (!FiltrarPor) {
+            return res.status(400).json({
+                success: false,
+                msg: "Debe proporcionar un valor en FiltrarPor"
+            });
+        }
+
+        if (FiltrarPor === 'MasVendidos') {
+            products = await Product.find({}).sort({ sold: -1 }).limit(10).populate("category", "name");
+        } else {
+            const productByName = await Product.find({ name: { $regex: FiltrarPor, $options: "i" } }).populate("category", "name");
+
+            if (productByName.length > 0) {
+                products = productByName;
+            } else {
+                const category = await Category.findOne({ name: FiltrarPor });
+
+                if (category) {
+                    products = await Product.find({ category: category._id }).populate("category", "name");
+                } else {
+                    return res.status(404).json({
+                        success: false,
+                        msg: "No se encontraron productos con ese criterio"
+                    });
+                }
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            products
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            msg: "Error al listar productos",
+            error: err.message
         });
     }
 };

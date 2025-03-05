@@ -1,86 +1,67 @@
-import {hash, verify} from "argon2"
-import User from "../user/user.model.js"
-import { generateJWT } from "../helpers/generate-jwt.js"
-
-
+import { hash, verify } from "argon2";
+import User from "../user/user.model.js";
+import { generateJWT } from "../helpers/generate-jwt.js";
 
 export const register = async (req, res) => {
-    try{
-        const data = req.body
-        const encryptedPassword = await hash(data.password)
-        data.password = encryptedPassword
-        
-        const user = await User.create(data)
+  try {
+    const data = req.body;
+    const encryptedPassword = await hash(data.password);
+    data.password = encryptedPassword;
 
-        return res.status(201).json({
-            message: "Se ha registrado de manera exitosa el administrador",
-            name: user.name,
-            email: user.email
-        })
-    }catch (err) {
-        return res. status(500).json({
-            message: "Error al registrar el administrador",
-            error: err.message 
-        })
-    }
-}
+    const user = await User.create(data);
 
-export const login = async (req, res) => {
-    const { email, username, password } = req.body;
-    try {
-        console.log("Iniciando proceso de login...");  
-        
-        // Buscar usuario por email o username
-        const user = await User.findOne({
-            $or: [{ email: email }, { username: username }]
-        });
-
-        if (!user) {
-            console.log("Usuario no encontrado"); 
-            return res.status(400).json({
-                message: "Credenciales inválidas",
-                error: "No existe el usuario o correo ingresado"
-            });
-        }
-
-        const validPassword = await verify(user.password, password);
-        if (!validPassword) {
-            console.log("Contraseña incorrecta"); 
-            return res.status(400).json({
-                message: "Credenciales inválidas",
-                error: "Contraseña incorrecta"
-            });
-        }
-
-     
-        const token = await generateJWT(user.id);
-        if (!token) {
-            console.log("No se pudo generar el token"); 
-            return res.status(500).json({
-                message: "Error al generar el token",
-                error: "No se pudo generar el token JWT"
-            });
-        }
-
-
-        return res.status(200).json({
-            message: "Inicio de sesión exitoso",
-            userDetails: {
-                token: token,
-                name: user.name,
-                role: user.role
-            }
-        });
-
-    } catch (err) {
-        console.error("Error en el login:", err); 
-        return res.status(500).json({
-            message: "Fallo en el inicio de sesión, error en el servidor",
-            error: err 
-        });
-    }
+    return res.status(201).json({
+      message: "User has been created",
+      name: user.name,
+      email: user.email,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "User registration failed",
+      error: err.message,
+    });
+  }
 };
 
+export const login = async (req, res) => {
+  const { email, username, password } = req.body;
+
+  try {
+    const user = await User.findOne({
+      $or: [{ email: email }, { username: username }],
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Crendenciales inválidas",
+        error: "No existe el usuario o correo ingresado",
+      });
+    }
+
+    const validPassword = await verify(user.password, password);
+
+    if (!validPassword) {
+      return res.status(400).json({
+        message: "Crendenciales inválidas",
+        error: "Contraseña incorrecta",
+      });
+    }
+
+    const token = await generateJWT(user.id);
+
+    return res.status(200).json({
+      message: "Login successful",
+      userDetails: {
+        token: token,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "login failed, server error",
+      error: err.message,
+    });
+  }
+};
 
 
 export const createAdmin = async () => {

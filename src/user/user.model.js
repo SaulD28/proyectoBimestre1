@@ -1,47 +1,36 @@
-import {Schema, model} from "mongoose"
+import { Schema, model } from "mongoose";
 
-const userSchema = Schema({
-    name:{
-        type: String,
-        required: [true, "El nombre del usuario es obligatorio"],
-        maxLength: [25, "El nombre no puede pasar de los 25 caracteres"],      
+const productSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Product name is required"],
+      maxLength: [50, "Product name cannot exceed 50 characters"],
     },
-
-    surname:{
-        type: String,
-        required: [true, "El apellido del usuario es obligatorio"],
-        maxLength: [25, "El apellido no puede pasar de los 25 caracteres"],
+    description: {
+      type: String,
+      required: [true, "Description is required"],
+      maxLength: [500, "Description cannot exceed 500 characters"],
     },
-    username:{
-        type: String,
-        required: true,
-        unique: true
+    price: {
+      type: Number,
+      required: [true, "Price is required"],
     },
-    email:{
-        type: String,
-        required: [true, "Se requiere el email del usuario"],
-        unique: true
+    stock: {
+      type: Number,
+      required: [true, "Stock is required"],
     },
-    password:{
-        type: String,
-        required: [true, "Se requiere una contraseña"]
+    sold: {
+      type: Number,
+      default: 0,
     },
-    role:{
-        type: String,
-        required: true,
-        enum: ["ADMIN_ROLE", "USER_ROLE"],
-        default: "USER_ROLE"
-    },
-    status:{
-        type: String,
-        default: true
-    }
-
-},
-{
+    
+  },
+  {
     versionKey: false,
-    timeStamps: true
+    timestamps: true,
+  }
+);
 
-})
+export default model("Product", productSchema);
 
-export default model("User", userSchema)
