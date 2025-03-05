@@ -1,6 +1,5 @@
 import Product from "../products/products.model.js";
 
-// Crear producto
 export const addProduct = async (req, res) => {
     try {
         const { name, description, price, stock } = req.body;
@@ -20,7 +19,6 @@ export const addProduct = async (req, res) => {
     }
 };
 
-// Obtener todos los productos
 export const fetchAllProducts = async (req, res) => {
     try {
         const products = await Product.find();
@@ -37,7 +35,7 @@ export const fetchAllProducts = async (req, res) => {
     }
 };
 
-// Obtener un producto por ID
+
 export const fetchProductById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -61,7 +59,7 @@ export const fetchProductById = async (req, res) => {
     }
 };
 
-// Actualizar producto
+
 export const modifyProduct = async (req, res) => {
     try {
         const { id } = req.params;
@@ -86,7 +84,7 @@ export const modifyProduct = async (req, res) => {
     }
 };
 
-// Eliminar producto
+
 export const removeProduct = async (req, res) => {
     try {
         const { id } = req.params;
@@ -111,7 +109,7 @@ export const removeProduct = async (req, res) => {
     }
 };
 
-// Obtener productos agotados
+
 export const getOutOfStockProducts = async (req, res) => {
     try {
         const outOfStock = await Product.find({ stock: 0 });
@@ -128,7 +126,7 @@ export const getOutOfStockProducts = async (req, res) => {
     }
 };
 
-// Obtener productos vendidos
+
 export const getSoldProducts = async (req, res) => {
     try {
         const soldProducts = await Product.find({ sold: { $gt: 0 } });
